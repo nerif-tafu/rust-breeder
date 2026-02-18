@@ -18,7 +18,7 @@
 
 <script lang="ts">
 import Gene from '@/models/gene.model';
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 import Sapling from '../models/sapling.model';
 
 @Component
@@ -42,21 +42,31 @@ $radiusPX: 1.5625em;
   --invalid-gene-bg-color: #cbcbcb;
   --invalid-gene-color: rgba(0, 0, 0, 0.87);
 }
+$cell-width: 1.8125em; /* circle + separator so columns align across rows (picture 1 grid) */
 .sapling-gene-repr {
   --invalid-gene-bg-color: #3d3d3d;
   --invalid-gene-color: white;
   font-size: 1em;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
   .sapling-gene-repr_gene-container {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    flex: 0 0 $cell-width;
     height: 1.5625em;
+    box-sizing: content-box;
   }
   .sapling-gene-repr_gene {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     height: $radiusPX;
     width: $radiusPX;
+    min-width: $radiusPX;
     border-radius: 50%;
-    vertical-align: middle;
     color: white;
     background-color: var(--invalid-gene-bg-color);
     line-height: $radiusPX;
@@ -78,11 +88,13 @@ $radiusPX: 1.5625em;
     animation-timing-function: ease-in-out;
   }
   .sapling-gene-repr_separator {
+    flex: 0 0 0.25em;
     display: inline-block;
     color: #505050;
-    margin: 0 2px;
-    vertical-align: middle;
+    margin: 0;
+    text-align: center;
     user-select: none;
+    font-size: 0.9em;
   }
 }
 

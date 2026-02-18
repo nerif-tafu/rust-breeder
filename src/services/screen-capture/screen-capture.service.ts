@@ -196,7 +196,7 @@ class ScreenCaptureService {
             [0, -0.5, 0]
           ])
           .contrast(0.5)
-          .getBase64('image/png', async (err, data) => {
+          .getBase64('image/png', async (_err, data) => {
             let {
               data: { text }
             } = await this.workers[workerIndex].recognize(data);

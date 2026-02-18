@@ -2,10 +2,10 @@
   <div
     class="group mx-auto"
     v-if="visibleGroup !== null"
-    @click="handleOverlayClick"
     :class="[animationClass, { 'group--visible': isVisible, 'group--overflow': applyOverflow }]"
   >
-    <div class="group_container" ref="scrollContainer">
+    <div class="group_backdrop" v-if="isVisible" @click="handleOverlayClick" aria-hidden="true" />
+    <div class="group_container" ref="scrollContainer" @click.stop>
       <div
         class="group_helper-text-container"
         v-if="(visibleGroup && visibleGroup.mapList.length > 1) || $slots.message"
@@ -33,7 +33,7 @@
             {{ `${index === 0 ? 'Best' : 'Alternative'} Option ${index > 0 ? index + 1 : ''}` }}
           </div>
           <SimulationMap
-            @click.native.stop="enableMapSelection && handleMapClick(map)"
+            @click.stop="enableMapSelection && handleMapClick(map)"
             @composing-sapling-selected="handleComposingSaplingSelectedEvent"
             class="group_map"
             :class="{
@@ -53,17 +53,17 @@
         </div>
       </div>
     </div>
-    <v-overlay z-index="6" :opacity="$vuetify.theme.dark ? 0.95 : 0.85" :value="isVisible"></v-overlay>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop, Watch } from 'vue-property-decorator';
+import { Component, Vue, Prop, Watch } from 'vue-facing-decorator';
 import SimulationMap from './SimulationMap.vue';
 import { GeneticsMapGroup, GeneticsMap } from '@/services/crossbreeding-service/models';
 
 @Component({
-  components: { SimulationMap }
+  components: { SimulationMap },
+  emits: ['map-selected', 'composing-sapling-selected', 'leave-group-browsing']
 })
 export default class SimulationMapGroupBrowser extends Vue {
   @Prop({ type: Object }) readonly group: GeneticsMapGroup | null;
@@ -152,7 +152,7 @@ export default class SimulationMapGroupBrowser extends Vue {
 .group {
   display: flex;
   position: fixed;
-  z-index: 1;
+  z-index: 1100;
   top: 0;
   left: 0;
   right: 0;
@@ -166,6 +166,17 @@ export default class SimulationMapGroupBrowser extends Vue {
   user-select: none;
   &.group--visible {
     opacity: 1;
+  }
+
+  .group_backdrop {
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    cursor: pointer;
   }
   &.group--overflow {
     .group_container {

@@ -45,10 +45,13 @@
 
 <script lang="ts">
 import { GeneticsMapGroup, GeneticsMap } from '@/services/crossbreeding-service/models';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue } from 'vue-facing-decorator';
 import SimulationMap from './SimulationMap.vue';
 
-@Component({ components: { SimulationMap } })
+@Component({
+  components: { SimulationMap },
+  emits: ['clear-highlight-clicked', 'composing-sapling-selected']
+})
 export default class HighlightedMap extends Vue {
   @Prop({ type: GeneticsMap, required: true }) map: GeneticsMap;
 

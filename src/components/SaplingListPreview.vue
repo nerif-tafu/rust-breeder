@@ -14,9 +14,8 @@
 
 <script lang="ts">
 import Sapling from '@/models/sapling.model';
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 import SaplingGeneRepresentation from './SaplingGeneRepresentation.vue';
-import goTo from 'vuetify/lib/services/goto';
 
 @Component({
   components: { SaplingGeneRepresentation }
@@ -49,7 +48,7 @@ export default class SaplingListPreview extends Vue {
         if (!isInView) {
           const topDistanceToCenterize =
             rect.top + window.scrollY - (window.innerHeight || document.documentElement.clientHeight) / 2;
-          goTo(topDistanceToCenterize, { duration: 100 });
+          window.scrollTo({ top: topDistanceToCenterize, behavior: 'smooth' });
         }
       }
     });
@@ -59,7 +58,7 @@ export default class SaplingListPreview extends Vue {
 
 <style scoped lang="scss">
 .sapling-list-preview {
-  margin-top: 9px;
+  margin-top: 15px;
   font-size: 0.72rem;
   position: absolute;
   top: 0px;
@@ -70,7 +69,10 @@ ul {
   margin: 0;
   padding: 0;
   li {
-    padding: 5px 0;
+    height: 1.75rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
   }
 }
 .sapling-list-preview_sapling--animate {

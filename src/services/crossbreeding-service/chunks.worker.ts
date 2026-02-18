@@ -15,6 +15,3 @@ ctx.addEventListener('message', (event) => {
   );
   ctx.postMessage({ workChunks });
 });
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default null as any;

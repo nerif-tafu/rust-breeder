@@ -7,38 +7,35 @@
     outlined
   >
     <v-list-item class="map_header">
-      <v-list-item-content>
-        <v-list-item-title>
-          <SaplingGeneRepresentation :sapling="map.resultSapling" class="map_sapling map_result-sapling" />
-        </v-list-item-title>
-        <v-list-item-subtitle class="mt-2 map_header-subtitle">
-          <span class="map_gen" :class="genClass">GEN.{{ map.resultSapling.generationIndex }}</span>
-          <span>&middot;</span>
-          <span class="map_score"
-            >Score: <span>{{ map.score }}</span></span
-          >
-          <span>&middot;</span>
-          <span class="map_chance" :class="chanceClass"
-            >Chance: <span>{{ Math.round(map.chance * 100) }}%</span>
-          </span>
-        </v-list-item-subtitle>
-      </v-list-item-content>
+      <v-list-item-title>
+        <SaplingGeneRepresentation :sapling="map.resultSapling" class="map_sapling map_result-sapling" />
+      </v-list-item-title>
+      <v-list-item-subtitle class="mt-2 map_header-subtitle">
+        <span class="map_gen" :class="genClass">GEN.{{ map.resultSapling.generationIndex }}</span>
+        <span>&middot;</span>
+        <span class="map_score"
+          >Score: <span>{{ map.score }}</span></span
+        >
+        <span>&middot;</span>
+        <span class="map_chance" :class="chanceClass"
+          >Chance: <span>{{ Math.round(map.chance * 100) }}%</span>
+        </span>
+      </v-list-item-subtitle>
     </v-list-item>
     <v-divider class="mx-4"></v-divider>
     <v-card-text class="map_detail px-0">
       <v-tooltip
         bottom
         open-delay="150"
-        :disabled="!enableTooltip || $vuetify.breakpoint.xsOnly"
+        :disabled="!enableTooltip || $vuetify.display.xs"
         z-index="1001"
         max-width="600"
       >
-        <template v-slot:activator="{ on, attrs }">
+        <template v-slot:activator="{ props }">
           <div
             class="map_center-sapling-container"
-            :class="{ 'map_center-sapling-container--tooltip-enabled': enableTooltip && !$vuetify.breakpoint.xsOnly }"
-            v-bind="attrs"
-            v-on="on"
+            :class="{ 'map_center-sapling-container--tooltip-enabled': enableTooltip && !$vuetify.display.xs }"
+            v-bind="props"
           >
             <div class="mb-1">
               Center Sapling:
@@ -84,12 +81,12 @@
       <v-tooltip
         bottom
         open-delay="150"
-        :disabled="!enableTooltip || $vuetify.breakpoint.xsOnly"
+        :disabled="!enableTooltip || $vuetify.display.xs"
         max-width="600"
         z-index="1001"
       >
-        <template v-slot:activator="{ on, attrs }">
-          <div v-bind="attrs" v-on="on">
+        <template v-slot:activator="{ props }">
+          <div v-bind="props">
             <div class="mb-1">Surrounding Saplings:</div>
             <ul>
               <li v-for="(crossbreedingSapling, index) in map.crossbreedingSaplings" :key="index">
@@ -136,13 +133,13 @@
 
 <script lang="ts">
 import { GeneticsMap } from '@/services/crossbreeding-service/models';
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 import SaplingGeneRepresentation from './SaplingGeneRepresentation.vue';
-import SimulationMapGroup from './SimulationMapGroup.vue';
 import SaplingDetailed from './SaplingDetailed.vue';
 
 @Component({
-  components: { SaplingGeneRepresentation, SimulationMapGroup, SaplingDetailed }
+  components: { SaplingGeneRepresentation, SaplingDetailed },
+  emits: ['composing-sapling-selected']
 })
 export default class SimulationMap extends Vue {
   @Prop({ type: Object, required: true }) readonly map!: GeneticsMap;
@@ -190,6 +187,10 @@ export default class SimulationMap extends Vue {
   text-align: center;
   user-select: none;
   width: 320px;
+  /* Match Vue 2 / Vuetify 2: dotted border and card spacing */
+  border: 2px dotted rgba(255, 255, 255, 0.35) !important;
+  border-radius: 4px;
+  padding: 0;
   &.map--selectable {
     cursor: pointer;
   }
@@ -199,6 +200,8 @@ export default class SimulationMap extends Vue {
     padding: 0;
   }
   .map_header {
+    padding: 12px 16px 8px;
+    min-height: 0;
     .map_header-subtitle {
       text-overflow: initial;
       display: flex;
@@ -229,6 +232,8 @@ export default class SimulationMap extends Vue {
   .map_sapling {
     font-size: 1rem;
     outline: 0px solid rgba(223, 145, 0, 0.3);
+    margin-left: auto;
+    margin-right: auto;
   }
   .map_center-sapling-info {
     font-weight: bold;
@@ -237,6 +242,8 @@ export default class SimulationMap extends Vue {
   .map_result-sapling {
     background-color: #191919;
     padding: 5px 0;
+    margin-left: auto;
+    margin-right: auto;
   }
   &:hover {
     .map_center-sapling-container.map_center-sapling-container--tooltip-enabled {
@@ -246,8 +253,10 @@ export default class SimulationMap extends Vue {
     }
   }
 }
-.theme--light .map {
+.theme--light .map,
+.v-theme--light .map {
   background-color: #f5f5f5;
+  border-color: rgba(0, 0, 0, 0.2) !important;
   .map_result-sapling {
     background-color: #e9e9e9;
   }

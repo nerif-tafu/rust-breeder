@@ -1,7 +1,7 @@
-declare module 'worker-loader!*' {
-  class WebpackWorker extends Worker {
-    constructor();
-  }
+/// <reference types="vite/client" />
 
-  export default WebpackWorker;
+// Vite worker import (use ?worker or &worker suffix or import from URL)
+declare module '*?worker' {
+  const workerConstructor: new () => Worker;
+  export default workerConstructor;
 }

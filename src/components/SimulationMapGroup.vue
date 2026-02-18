@@ -15,15 +15,15 @@
           "
         >
           <SimulationMap
-            @click.native="handleMapClick(index)"
-            @mouseenter.native="() => index !== 0 && handleBackingMapMouseEnter()"
-            @mouseleave.native="handleMouseLeave(index)"
-            @pointerleave.native="handleMouseLeave(index)"
-            @touchmove.native="handleMouseLeave(index)"
-            @mousedown.native="() => index === 0 && handleMouseDown()"
-            @pointerdown.native="() => index === 0 && handleMouseDown()"
-            @mouseup.native="() => index === 0 && handleMouseUp()"
-            @pointerup.native="() => index === 0 && handleMouseUp()"
+            @click="handleMapClick(index)"
+            @mouseenter="handleMapMouseEnter(index)"
+            @mouseleave="handleMouseLeave(index)"
+            @pointerleave="handleMouseLeave(index)"
+            @touchmove="handleMouseLeave(index)"
+            @mousedown="handleMapMouseDown(index)"
+            @pointerdown="handleMapMouseDown(index)"
+            @mouseup="handleMapMouseUp(index)"
+            @pointerup="handleMapMouseUp(index)"
             :ref="index === 0 ? 'primaryMap' : null"
             class="group_map"
             :class="{
@@ -52,12 +52,13 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop, Watch } from 'vue-property-decorator';
+import { Component, Vue, Prop, Watch } from 'vue-facing-decorator';
 import SimulationMap from './SimulationMap.vue';
 import { GeneticsMapGroup, GeneticsMap } from '@/services/crossbreeding-service/models';
 
 @Component({
-  components: { SimulationMap }
+  components: { SimulationMap },
+  emits: ['group-selected', 'map-selected']
 })
 export default class SimulationMapGroup extends Vue {
   @Prop({ type: Object, required: true }) readonly group!: GeneticsMapGroup;
@@ -79,11 +80,11 @@ export default class SimulationMapGroup extends Vue {
   }
 
   get mapList() {
-    return this.group.mapList.filter((map, index) => index === 0 || this.computedShowAlternateCards);
+    return this.group.mapList.filter((_map, index) => index === 0 || this.computedShowAlternateCards);
   }
 
   get computedShowAlternateCards() {
-    return this.showAlternateCards && !this.$vuetify.breakpoint.xs;
+    return this.showAlternateCards && !this.$vuetify.display.xs;
   }
 
   mounted() {
@@ -93,6 +94,18 @@ export default class SimulationMapGroup extends Vue {
   @Watch('index')
   onIndexChange() {
     this.playAppearAnimation();
+  }
+
+  handleMapMouseEnter(index: number) {
+    if (index !== 0) this.handleBackingMapMouseEnter();
+  }
+
+  handleMapMouseDown(index: number) {
+    if (index === 0) this.handleMouseDown();
+  }
+
+  handleMapMouseUp(index: number) {
+    if (index === 0) this.handleMouseUp();
   }
 
   playAppearAnimation() {
@@ -118,7 +131,7 @@ export default class SimulationMapGroup extends Vue {
 
   setForcedHeight() {
     if (this.$refs.primaryMap) {
-      this.backingMapHeight = ((this.$refs.primaryMap as Vue[])[0]?.$el as HTMLElement).offsetHeight;
+      this.backingMapHeight = ((this.$refs.primaryMap as { $el: HTMLElement }[])[0]?.$el as HTMLElement).offsetHeight;
     }
   }
 

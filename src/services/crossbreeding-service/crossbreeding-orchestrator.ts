@@ -1,5 +1,7 @@
-import ChunksWorker from 'worker-loader!./chunks.worker';
-import CrossbreedingWorker from 'worker-loader!./crossbreeding.worker';
+const ChunksWorkerConstructor = () =>
+  new Worker(new URL('./chunks.worker.ts', import.meta.url), { type: 'module' });
+const CrossbreedingWorkerConstructor = () =>
+  new Worker(new URL('./crossbreeding.worker.ts', import.meta.url), { type: 'module' });
 import ApplicationOptions from '@/interfaces/application-options';
 import {
   resultMapGroupsSortingFunction,
@@ -29,8 +31,8 @@ class CrossbreedingOrchestrator {
   generationInfo: GenerationInfo;
   options: ApplicationOptions;
 
-  chunksWorker: ChunksWorker;
-  workers: CrossbreedingWorker[];
+  chunksWorker: Worker;
+  workers: Worker[];
   combinationsToProcess: number;
   combinationsProcessedSoFar: number;
   mapGroupMap: { [key: string]: GeneticsMapGroup } = {};
@@ -66,16 +68,20 @@ class CrossbreedingOrchestrator {
     this.workers = [];
     this.processingStats = [];
 
-    this.chunksWorker = new ChunksWorker();
+    this.chunksWorker = ChunksWorkerConstructor();
 
     // If there is just one worker there is no reason to split its work so we aim for just 1 chunk.
     // Otherwise we scale number of chunks with number of workers.
     const numberOfWorkChunks = numberOfWorkers > 1 ? numberOfWorkers * WORK_CHUNKS_PER_WORKER : 1;
+    // Clone to plain objects so postMessage doesn't hit Vue reactive Proxies (structured clone cannot clone them).
+    const plain = JSON.parse(
+      JSON.stringify({ sourceSaplings, options, generationInfo })
+    ) as { sourceSaplings: Sapling[]; options: ApplicationOptions; generationInfo: GenerationInfo };
     this.chunksWorker.postMessage({
       numberOfWorkChunks,
-      sourceSaplings,
-      options,
-      generationInfo
+      sourceSaplings: plain.sourceSaplings,
+      options: plain.options,
+      generationInfo: plain.generationInfo
     });
 
     this.chunksWorker.addEventListener('message', (event) => {
@@ -87,13 +93,13 @@ class CrossbreedingOrchestrator {
       const workChunksPerWorker: WorkChunk[][] = [];
       for (let workerIndex = 0; workerIndex < numberOfWorkers; workerIndex++) {
         const currentWorkerWorkChunks = workChunks.filter(
-          (workChunk, workChunkIndex) => workChunkIndex % numberOfWorkers === workerIndex
+          (_workChunk, workChunkIndex) => workChunkIndex % numberOfWorkers === workerIndex
         );
         workChunksPerWorker.push(currentWorkerWorkChunks);
       }
 
       for (let workerIndex = 0; workerIndex < numberOfWorkers; workerIndex++) {
-        const worker = new CrossbreedingWorker();
+        const worker = CrossbreedingWorkerConstructor();
         this.workers.push(worker);
 
         worker.addEventListener('message', (event) => {
@@ -101,10 +107,10 @@ class CrossbreedingOrchestrator {
         });
 
         worker.postMessage({
-          sourceSaplings,
+          sourceSaplings: plain.sourceSaplings,
           workChunks: workChunksPerWorker[workerIndex],
-          generationInfo,
-          options
+          generationInfo: plain.generationInfo,
+          options: plain.options
         });
       }
     });

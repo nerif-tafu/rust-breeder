@@ -25,9 +25,9 @@
                 mdi-cancel
               </v-icon></v-btn
             >
-            <v-tooltip top open-delay="250" z-index="1001" max-width="600" bottom>
-              <template v-slot:activator="{ on }">
-                <div v-on="on">
+            <v-tooltip location="bottom" open-delay="250" z-index="1001" max-width="600">
+              <template v-slot:activator="{ props }">
+                <div v-bind="props">
                   <v-btn
                     class="ma-1"
                     color="orange"
@@ -89,7 +89,7 @@
         <div
           ref="results"
           v-if="showResultsPanel"
-          class="simulator_results pa-0 pa-md-3"
+          class="simulator_results pa-0 pa-md-10"
           :class="{ 'simulation_results--separated': showHighlight }"
         >
           <SimulationResults
@@ -141,7 +141,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { getCurrentInstance } from 'vue';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 import crossbreedingOrchestrator from '../services/crossbreeding-service/crossbreeding-orchestrator';
 import SimulationResults from './SimulationResults.vue';
 import SimulationMap from './SimulationMap.vue';
@@ -155,7 +156,7 @@ import {
   SimulatorEventType
 } from '@/services/crossbreeding-service/models';
 import Sapling from '@/models/sapling.model';
-import goTo from 'vuetify/lib/services/goto';
+import { goTo } from '@/lib/scroll-utils';
 import ProgressIndicator from './ProgressIndicator.vue';
 import SimulationMapGroup from './SimulationMapGroup.vue';
 import SimulationMapGroupBrowser from './SimulationMapGroupBrowser.vue';
@@ -174,7 +175,8 @@ import HighlightedMap from './HighlightedMap.vue';
     SimulationMapGroup,
     SimulationMapGroupBrowser,
     HighlightedMap
-  }
+  },
+  emits: ['estimated-time-updated']
 })
 export default class CrossbreedingSimulator extends Vue {
   @Prop({ type: Boolean }) readonly functionalCookiesAccepted: boolean;
@@ -233,13 +235,12 @@ export default class CrossbreedingSimulator extends Vue {
     return this.progressPercents[this.currentGenerationIndex - 1] !== undefined;
   }
 
-  constructor() {
-    super();
-    crossbreedingOrchestrator.addEventListener(this.onCrossbreedingServiceEvent);
-  }
-
   mounted() {
     this.options = (this.$refs.options as Options).getOptions();
+    const proxy = getCurrentInstance()?.proxy;
+    if (proxy) {
+      crossbreedingOrchestrator.addEventListener((type, data) => proxy.onCrossbreedingServiceEvent(type, data));
+    }
   }
 
   onCrossbreedingServiceEvent(type: string, data: CrossbreedingOrchestratorEventListenerCallbackData) {
@@ -284,8 +285,12 @@ export default class CrossbreedingSimulator extends Vue {
     // To decrease the number of updates on the UI we only update on change of the most significant decimal place.
     const progressPercentWithOneDecimal = Number(progressPercent.toFixed(1));
     if (this.progressPercents[generationProgressIndex] !== progressPercentWithOneDecimal) {
-      this.onNextTickRerender(() => {
-        Vue.set(this.progressPercents, generationProgressIndex, progressPercentWithOneDecimal);
+      this.$nextTick(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            this.progressPercents[generationProgressIndex] = progressPercentWithOneDecimal;
+          });
+        });
       });
     }
     const progressPercentWithNoDecimals = Math.round(progressPercent || 0);
@@ -366,7 +371,7 @@ export default class CrossbreedingSimulator extends Vue {
     this.highlightedMap = map;
     this.selectedBrowsingGroup = null;
     this.onNextTickRerender(() => {
-      goTo(this.$refs.highlightedMap as HTMLElement, { duration: 200, appOffset: true, offset: 64 });
+      goTo(this.$refs.highlightedMap as HTMLElement, { duration: 200, offset: 64 });
     });
   }
 
@@ -433,7 +438,9 @@ export default class CrossbreedingSimulator extends Vue {
 }
 @media (min-width: 1040px) {
   .simulator_container.simulator_container--with-results {
-    max-width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
     display: grid;
     grid-template-columns: 480px minmax(540px, 1fr);
   }

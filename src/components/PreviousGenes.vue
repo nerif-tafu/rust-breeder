@@ -23,12 +23,12 @@
 
 <script lang="ts">
 import StoredSet from '@/interfaces/stored-set';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue } from 'vue-facing-decorator';
 
 const GENE_SETS_KEY = 'PREVIOUS_GENE_SETS';
 const MAX_STORED_SETS = 200;
 
-@Component
+@Component({ emits: ['genes-selected'] })
 export default class PreviousGenes extends Vue {
   @Prop({ type: String }) readonly selectedPlantTypeName: string;
   storedSets: StoredSet[] = [];

@@ -6,13 +6,11 @@
       v-if="!isSnackbarOpen && !isManageModalOpen"
       @click="handleCookieButtonClick"
     >
-      <v-icon large>
-        mdi-cookie
-      </v-icon>
+      <v-icon size="large">mdi-cookie</v-icon>
     </v-btn>
-    <v-snackbar v-model="isSnackbarOpen" multi-line timeout="-1" bottom>
+    <v-snackbar v-model="isSnackbarOpen" multi-line :timeout="-1" location="bottom">
       <div class="d-flex">
-        <v-icon large class="cookie-consent_snackbar-cookie-icon hidden-xs-only">
+        <v-icon size="large" class="cookie-consent_snackbar-cookie-icon d-none d-sm-flex">
           mdi-cookie
         </v-icon>
         <div>
@@ -20,28 +18,19 @@
           genes and saving your preferred options require your acceptance to work.
         </div>
         <div class="cookie-consent_actions flex-column d-flex ml-2">
-          <v-btn color="primary" @click="handleAcceptAllClick">
-            Accept all
-          </v-btn>
-          <v-btn @click="handleDeclineAllClick">
-            Decline all
-          </v-btn>
-          <v-btn text @click="handleManageClick">
-            Manage
-          </v-btn>
+          <v-btn color="primary" @click="handleAcceptAllClick">Accept all</v-btn>
+          <v-btn @click="handleDeclineAllClick">Decline all</v-btn>
+          <v-btn variant="text" @click="handleManageClick">Manage</v-btn>
         </div>
       </div>
     </v-snackbar>
 
-    <v-dialog v-model="isManageModalOpen" width="600" @click:outside="handleManageModalClose">
+    <v-dialog v-model="isManageModalOpen" max-width="600" @click:outside="handleManageModalClose">
       <v-card>
-        <v-card-title class="headline px-3 px-sm-5" primary-title>
-          <h2 class="text-h5">
-            <v-icon large>mdi-cookie</v-icon>
-            Manage Your Storage Preferences
-          </h2>
+        <v-card-title class="text-h5 px-3 px-sm-5">
+          <v-icon size="large" class="mr-2">mdi-cookie</v-icon>
+          Manage Your Storage Preferences
         </v-card-title>
-
         <v-card-text>
           <v-switch
             v-model="essentialCookiesAccepted"
@@ -49,24 +38,19 @@
             label="Enable Essential Cookies"
             hint="These cookies are necessary to track your Storage preferences."
             persistent-hint
-          ></v-switch>
+          />
           <v-switch
             v-model="currentFunctionalCookiesAccepted"
             label="Allow Functional Cookies and Local Storage"
             hint="Controls whether functionalities like previously calculated genes and saving your preferred options are enabled."
             persistent-hint
-          ></v-switch>
+          />
         </v-card-text>
-
-        <v-divider></v-divider>
+        <v-divider />
         <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn text @click="handleManageModalClose">
-            Close
-          </v-btn>
-          <v-btn color="primary" @click="handleSavePreferences">
-            Save Preferences
-          </v-btn>
+          <v-spacer />
+          <v-btn variant="text" @click="handleManageModalClose">Close</v-btn>
+          <v-btn color="primary" @click="handleSavePreferences">Save Preferences</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -74,7 +58,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue } from 'vue-facing-decorator';
 import { getCookie, getCookies, setCookie, removeCookie } from 'typescript-cookie';
 import { OPTIONS_COOKIE_PREFIX } from './Options.vue';
 
@@ -87,7 +71,8 @@ const PREF_COOKIE_NAME_PREFIX = `rb-cookie-pref-v${CONSENTS_VERSION}`;
 const STORAGE_PREFERENCE_DECIDED_COOKIE_NAME = `${PREF_COOKIE_NAME_PREFIX}-storage-preference-decided`;
 const FUNCTIONAL_GROUP_COOKIE_NAME = `${PREF_COOKIE_NAME_PREFIX}-functional-cookies-and-storage`;
 
-const FUNCTIONAL_DECLINE_CONFIRM_MODAL_TEXT = 'You might lose previously saved genes or your saved preferred options.';
+const FUNCTIONAL_DECLINE_CONFIRM_MODAL_TEXT =
+  'You might lose previously saved genes or your saved preferred options.';
 const FUNCTIONAL_DECLINE_CONFIRM_MODAL_OPTIONS = {
   title: 'Warning',
   buttonTrueText: 'Proceed Anyway',
@@ -97,27 +82,19 @@ const FUNCTIONAL_DECLINE_CONFIRM_MODAL_OPTIONS = {
 const PREFERENCE_EXPIRATION_DAYS = 182;
 const CHOICE_EXPIRATION_DAYS = 365;
 
-@Component
+@Component({ emits: ['cookies-updated'] })
 export default class CookieConsent extends Vue {
   isSnackbarOpen = false;
   isManageModalOpen = false;
   arePreferencesSet = false;
-
   essentialCookiesAccepted = true;
-
   functionalCookiesAccepted = getCookie(FUNCTIONAL_GROUP_COOKIE_NAME) === 'true' || false;
-
-  // These properties hold the temporary decision before it is commited.
   currentFunctionalCookiesAccepted = this.functionalCookiesAccepted;
 
   mounted() {
     this.arePreferencesSet = getCookie(STORAGE_PREFERENCE_DECIDED_COOKIE_NAME) === 'true';
     if (this.arePreferencesSet) {
       this.fireCookieStateUpdateEvent();
-
-      // Refresh the duration on the choices so that they are not lost even if User is prompted with
-      // the Cookie Consent banner again. Tracking choices for longer will let the User keep his stored data
-      // in functionalities like saved genes and persistent options if he decides to keep the functional group enabled.
       this.setGroupChoiceCookies();
     } else {
       this.isSnackbarOpen = true;
@@ -133,7 +110,7 @@ export default class CookieConsent extends Vue {
 
   handleDeclineAllClick() {
     this.isSnackbarOpen = false;
-    this.checkIfNeedsConfirmationModal(true).then((confirmed) => {
+    this.checkIfNeedsConfirmationModal(true).then((confirmed: boolean) => {
       if (confirmed) {
         this.trackPreferencesSet();
         this.declineFunctionalCookies();
@@ -156,14 +133,11 @@ export default class CookieConsent extends Vue {
 
   handleSavePreferences() {
     this.isManageModalOpen = false;
-    this.checkIfNeedsConfirmationModal(this.currentFunctionalCookiesAccepted === false).then((confirmed) => {
+    this.checkIfNeedsConfirmationModal(this.currentFunctionalCookiesAccepted === false).then((confirmed: boolean) => {
       if (confirmed) {
         this.trackPreferencesSet();
-
         this.functionalCookiesAccepted = this.currentFunctionalCookiesAccepted;
-
         this.setGroupChoiceCookies();
-
         this.fireCookieStateUpdateEvent();
       } else {
         this.isManageModalOpen = true;
@@ -181,16 +155,13 @@ export default class CookieConsent extends Vue {
 
   checkIfNeedsConfirmationModal(willDeclineFunctionalCookies: boolean) {
     return this.functionalCookiesAccepted && willDeclineFunctionalCookies
-      ? this.$confirm(FUNCTIONAL_DECLINE_CONFIRM_MODAL_TEXT, FUNCTIONAL_DECLINE_CONFIRM_MODAL_OPTIONS)
+      ? (this as any).$confirm(FUNCTIONAL_DECLINE_CONFIRM_MODAL_TEXT, FUNCTIONAL_DECLINE_CONFIRM_MODAL_OPTIONS)
       : Promise.resolve(true);
   }
 
   handleManageModalClose() {
     this.isManageModalOpen = false;
-
-    // Since User closed the modal without saving we need to revert unsaved changes.
     this.currentFunctionalCookiesAccepted = this.functionalCookiesAccepted;
-
     if (!this.arePreferencesSet) {
       this.isSnackbarOpen = true;
     }
@@ -204,22 +175,20 @@ export default class CookieConsent extends Vue {
   acceptFunctionalCookies() {
     this.functionalCookiesAccepted = true;
     this.currentFunctionalCookiesAccepted = this.functionalCookiesAccepted;
-    setCookie(FUNCTIONAL_GROUP_COOKIE_NAME, this.functionalCookiesAccepted, { expires: CHOICE_EXPIRATION_DAYS });
+    setCookie(FUNCTIONAL_GROUP_COOKIE_NAME, String(this.functionalCookiesAccepted), { expires: CHOICE_EXPIRATION_DAYS });
   }
 
   declineFunctionalCookies() {
     this.functionalCookiesAccepted = false;
     this.currentFunctionalCookiesAccepted = this.functionalCookiesAccepted;
-    setCookie(FUNCTIONAL_GROUP_COOKIE_NAME, this.functionalCookiesAccepted, { expires: CHOICE_EXPIRATION_DAYS });
-
+    setCookie(FUNCTIONAL_GROUP_COOKIE_NAME, String(this.functionalCookiesAccepted), { expires: CHOICE_EXPIRATION_DAYS });
     this.clearFunctionalCookiesAndStorage();
   }
 
   fireCookieStateUpdateEvent() {
-    const eventData: CookiesUpdateEvent = {
+    this.$emit('cookies-updated', {
       functionalCookiesAccepted: this.functionalCookiesAccepted
-    };
-    this.$emit('cookies-updated', eventData);
+    } as CookiesUpdateEvent);
   }
 
   clearFunctionalCookiesAndStorage() {
@@ -228,8 +197,6 @@ export default class CookieConsent extends Vue {
       .forEach((cookieName) => {
         removeCookie(cookieName);
       });
-
-    // Clears localStorage, which is set by PreviousGenes component to show calculation history.
     localStorage.clear();
   }
 }

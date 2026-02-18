@@ -1,6 +1,6 @@
 <template>
   <div :class="{ 'd-none': !mapGroups || mapGroups.length === 0 }">
-    <v-form ref="form" v-model="isFormValid" spellcheck="false">
+    <v-form ref="form" v-model="isFormValid" spellcheck="false" class="simulation-results_form">
       <v-container class="px-3 py-0">
         <v-row>
           <v-col class="px-2 py-0">
@@ -75,12 +75,13 @@
 <script lang="ts">
 import GeneEnum from '@/enums/gene.enum';
 import { GeneticsMap, GeneticsMapGroup } from '@/services/crossbreeding-service/models';
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 import InViewAnchor from './InViewAnchor.vue';
 import SimulationMapGroup from './SimulationMapGroup.vue';
 
 @Component({
-  components: { SimulationMapGroup, InViewAnchor }
+  components: { SimulationMapGroup, InViewAnchor },
+  emits: ['map-selected', 'group-selected']
 })
 export default class SimulationResults extends Vue {
   @Prop({ type: Array }) readonly mapGroups: GeneticsMapGroup[];
@@ -199,5 +200,11 @@ ul {
       margin-top: 10px;
     }
   }
+}
+</style>
+
+<style lang="scss">
+.simulation-results_form .v-field__input {
+  padding: 25px 0 0 15px !important;
 }
 </style>

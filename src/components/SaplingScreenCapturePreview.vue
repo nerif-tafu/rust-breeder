@@ -9,9 +9,9 @@
     <div class="scanner_preview-region pa-2">
       <p class="mb-3">
         Inventory Region
-        <v-tooltip top open-delay="400" z-index="1001" max-width="600">
-          <template v-slot:activator="{ on, attrs }">
-            <v-icon class="float-end" v-bind="attrs" text v-on="on">
+        <v-tooltip location="top" open-delay="400" z-index="1001" max-width="600">
+          <template v-slot:activator="{ props }">
+            <v-icon class="float-end" v-bind="props" variant="text">
               mdi-information-outline
             </v-icon>
           </template>
@@ -27,9 +27,9 @@
     <div class="scanner_preview-region mt-4 pa-2">
       <p class="mb-3">
         Planter Region
-        <v-tooltip top open-delay="400" z-index="1001" max-width="600">
-          <template v-slot:activator="{ on, attrs }">
-            <v-icon class="float-end" v-bind="attrs" text v-on="on">
+        <v-tooltip location="top" open-delay="400" z-index="1001" max-width="600">
+          <template v-slot:activator="{ props }">
+            <v-icon class="float-end" v-bind="props" variant="text">
               mdi-information-outline
             </v-icon>
           </template>
@@ -46,7 +46,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 
 @Component
 export default class SaplingScreenCapturePreview extends Vue {

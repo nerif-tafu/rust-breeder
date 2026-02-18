@@ -7,7 +7,7 @@
         :class="{
           'sapling-list-numbering_number--special': index !== 0 && index % 6 === 0 && showSpecial
         }"
-        v-for="(saplingGenes, index) in saplingGeneList"
+        v-for="(_saplingGenes, index) in saplingGeneList"
         :key="index"
       >
         {{ index + 1 }}
@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 import SaplingGeneRepresentation from './SaplingGeneRepresentation.vue';
 
 @Component({

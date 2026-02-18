@@ -1,21 +1,19 @@
 <template>
   <v-form v-model="isFormValid">
-    <v-dialog v-model="isDialogOpen" width="600" @click:outside="undoChanges">
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn v-bind="attrs" v-on="on">
+    <v-dialog v-model="isDialogOpen" max-width="600" @click:outside="undoChanges">
+      <template v-slot:activator="{ props }">
+        <v-btn v-bind="props">
           Options
-          <v-icon right>
-            mdi-cog
-          </v-icon>
+          <v-icon end>mdi-cog</v-icon>
         </v-btn>
       </template>
 
       <v-card>
-        <v-card-title class="headline px-3 px-sm-5" primary-title>
+        <v-card-title class="text-h5 px-3 px-sm-5">
           <h2 class="text-h5">Options</h2>
-          <v-tooltip top open-delay="400" z-index="1001" max-width="600">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn v-bind="attrs" text v-on="on" class="ml-auto" color="primary" @click="resetToDefaults">
+          <v-tooltip location="top" open-delay="400" z-index="1001" max-width="600">
+            <template v-slot:activator="{ props }">
+              <v-btn v-bind="props" variant="text" class="ml-auto" color="primary" @click="resetToDefaults">
                 Reset
               </v-btn>
             </template>
@@ -24,22 +22,22 @@
         </v-card-title>
 
         <v-tabs v-model="tab">
-          <v-tab>Crossbreeding</v-tab>
-          <v-tab>UI & Sounds</v-tab>
+          <v-tab value="0">Crossbreeding</v-tab>
+          <v-tab value="1">UI & Sounds</v-tab>
         </v-tabs>
-        <v-divider></v-divider>
+        <v-divider />
 
         <v-card-text class="px-0">
-          <v-tabs-items v-model="tab">
-            <v-tab-item class="px-5">
+          <v-window v-model="tab">
+            <v-window-item value="0" class="px-5">
               <v-slider
                 class="mt-8"
                 label="Number of Workers"
                 v-model.number="options.numberOfWorkers"
                 min="1"
                 :max="maxNumberOfWorkers"
-                ticks="always"
-                :tick-labels="numberOfWorkersLabels"
+                show-ticks="always"
+                :ticks="numberOfWorkersLabels"
                 hint="Controls how many background workers are spawned during the calculation. A higher number means the calculation will be finished quicker, but it may cause your processor to be overloaded. If your device is struggling just lower the number."
                 persistent-hint
               ></v-slider>
@@ -48,8 +46,8 @@
                 v-model="crossbreedingSaplingsNumberRange"
                 min="2"
                 max="8"
-                :tick-labels="maxCrossbreedingSaplingsLabels"
-                ticks="always"
+                :ticks="maxCrossbreedingSaplingsLabels"
+                show-ticks="always"
                 tick-size="2"
                 label="Crossbreeding Saplings Range"
                 hint="Controls the range of Saplings that can be used for a single Crossbreeding session. It seems that range from 2 to 5 is a sweet spot between effectiveness and calculation speed. It is possible that we are missing some results if this value is not set to the extremes, but it saves a lot of processing time."
@@ -61,10 +59,10 @@
                 v-model.number="options.numberOfGenerations"
                 min="1"
                 max="3"
-                :tick-labels="numberOfGenerationLabels"
-                ticks="always"
+                :ticks="numberOfGenerationLabels"
+                show-ticks="always"
                 tick-size="2"
-              ></v-slider>
+              />
               <v-text-field
                 class="mt-6"
                 type="number"
@@ -112,9 +110,9 @@
                 v-model.number="options.minimumTrackedScore"
                 :rules="minimumTrackedScoreRules"
               ></v-text-field>
-            </v-tab-item>
+            </v-window-item>
 
-            <v-tab-item class="px-5">
+            <v-window-item value="1" class="px-5">
               <v-switch
                 v-model="options.darkMode"
                 :label="`Switch to ${!options.darkMode ? 'Dark' : 'Light'} Mode`"
@@ -139,8 +137,8 @@
                 hint="Turning this off enables a save button that allows you to decide which genes you want to save."
                 persistent-hint
               ></v-switch>
-            </v-tab-item>
-          </v-tabs-items>
+            </v-window-item>
+          </v-window>
         </v-card-text>
 
         <v-divider></v-divider>
@@ -149,19 +147,18 @@
           <v-btn color="primary" text @click="handleCloseButtonClick">
             Close
           </v-btn>
-          <v-tooltip top open-delay="400" z-index="1001" max-width="600">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn v-bind="attrs" v-on="on" class="ml-2" color="primary" @click="setOptions" :disabled="!isFormValid">
+          <v-tooltip location="top" open-delay="400" z-index="1001" max-width="600">
+            <template v-slot:activator="{ props }">
+              <v-btn v-bind="props" class="ml-2" color="primary" @click="setOptions" :disabled="!isFormValid">
                 Set
               </v-btn>
             </template>
             <span>Sets the selected options for as long as the App is open.</span>
           </v-tooltip>
-          <v-tooltip top open-delay="400" v-if="functionalCookiesAccepted" z-index="1001" max-width="600">
-            <template v-slot:activator="{ on, attrs }">
+          <v-tooltip location="top" open-delay="400" v-if="functionalCookiesAccepted" z-index="1001" max-width="600">
+            <template v-slot:activator="{ props }">
               <v-btn
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
                 class="ml-2"
                 color="primary"
                 @click="saveOptions"
@@ -179,7 +176,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop, Inject } from 'vue-facing-decorator';
 import GeneEnum from '../enums/gene.enum';
 import ApplicationOptions from '../interfaces/application-options';
 import { getCookie, setCookie } from 'typescript-cookie';
@@ -219,10 +216,11 @@ const STORED_OPTIONS = getCookie(OPTIONS_COOKIE_KEY);
 
 @Component
 export default class Options extends Vue {
-  @Prop({ type: Boolean }) readonly functionalCookiesAccepted: boolean;
+  @Inject({ from: 'setThemeDark' }) setThemeDark!: (dark: boolean) => void;
+  @Prop({ type: Boolean }) readonly functionalCookiesAccepted!: boolean;
   isDialogOpen = false;
   isFormValid = false;
-  tab = null;
+  tab = 0;
 
   currentlySetOptions: ApplicationOptions = STORED_OPTIONS
     ? JSON.parse(STORED_OPTIONS)
@@ -254,7 +252,7 @@ export default class Options extends Vue {
 
   get numberOfWorkersLabels() {
     const modBy = this.maxNumberOfWorkers >= 24 ? 4 : this.maxNumberOfWorkers >= 16 ? 2 : 1;
-    return Array.from({ length: this.maxNumberOfWorkers }, (value, index) => {
+    return Array.from({ length: this.maxNumberOfWorkers }, (_value, index) => {
       const currentNumberOfWorkers = index + 1;
       return currentNumberOfWorkers % modBy === 0 ? currentNumberOfWorkers.toString() : '';
     });
@@ -263,7 +261,7 @@ export default class Options extends Vue {
   get scoreInputs() {
     return Object.keys(this.options.geneScores || {})
       .map((key) => ({ key: key as GeneEnum, value: this.options.geneScores?.[key as GeneEnum] }))
-      .filter((item, index) => index < 5);
+      .filter((_item, index) => index < 5);
   }
 
   get minimumTrackedScoreDerived() {
@@ -282,7 +280,7 @@ export default class Options extends Vue {
   }
 
   mounted() {
-    this.$vuetify.theme.dark = this.currentlySetOptions.darkMode;
+    this.setThemeDark(this.currentlySetOptions.darkMode);
   }
 
   handleModifyMinimumTrackedScoreManuallyChange(value: boolean) {
@@ -311,7 +309,7 @@ export default class Options extends Vue {
       this.options.minCrossbreedingSaplingsNumber,
       this.options.maxCrossbreedingSaplingsNumber
     ];
-    this.$vuetify.theme.dark = this.options.darkMode;
+    this.setThemeDark(this.options.darkMode);
   }
 
   getOptions() {
@@ -338,7 +336,7 @@ export default class Options extends Vue {
   }
 
   handleUIModeChange(checked: boolean) {
-    this.$vuetify.theme.dark = checked;
+    this.setThemeDark(checked);
   }
 
   storeOptionsInCookie() {

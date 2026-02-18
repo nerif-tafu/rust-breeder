@@ -1,6 +1,4 @@
-/**
- * @jest-environment node
- */
+/// <reference types="vitest/globals" />
 import Sapling from '@/models/sapling.model';
 import { GenerationInfo, GeneticsMap, SimulateOptions } from '@/services/crossbreeding-service/models';
 import crossbreedingService from '@/services/crossbreeding-service/crossbreeding.service';

@@ -10,7 +10,7 @@ If you want to see it in action but don't know how to provide valid input: [clic
 
 ## Tech Stack
 
-- [Vue2](https://v2.vuejs.org/) + [Vuetify2](https://v2.vuetifyjs.com/) + [Typescript](https://www.typescriptlang.org/) - User Interface
+- [Vue 3](https://vuejs.org/) + [Vuetify 3](https://vuetifyjs.com/) + [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vitejs.dev/) - User Interface
 - [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) - used for unblocking main thread and utilizing multiple CPU threads
 - [Tesseract.js](https://github.com/naptha/tesseract.js) + [Screen Capture API](https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API) - used for screen scanning functionality that helps avoid having to type plant genes manually
 
@@ -33,6 +33,8 @@ npm install
 ```
 npm run serve
 ```
+
+(Press `q` in the terminal to quit the dev server.)
 
 ### Compiles and Minifies for Production
 

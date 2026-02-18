@@ -17,7 +17,7 @@
 <script lang="ts">
 import Sapling from '@/models/sapling.model';
 import { GeneticsMap } from '@/services/crossbreeding-service/models';
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 
 @Component
 export default class SaplingInputHighlights extends Vue {

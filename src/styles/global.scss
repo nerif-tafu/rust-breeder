@@ -1,0 +1,48 @@
+// App font and input/textarea styling (Source Code Pro avoids Roboto Mono glyph warning)
+@use '@/scss/variables.scss' as *;
+
+$app-font: $body-font-family;
+
+// Global font (avoid targeting * so icon fonts e.g. MDI are unchanged)
+html,
+body,
+.v-application {
+  font-family: $app-font !important;
+}
+.v-application .v-btn__content,
+.v-application .v-tab,
+.v-application .v-card-title,
+.v-application .v-card-text,
+.v-application .v-list-item-title,
+.v-application .v-list-item-subtitle,
+.v-application .v-label {
+  font-family: $app-font !important;
+}
+
+// Typography classes (Vuetify uses !important, so we override)
+.text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6,
+.text-subtitle-1, .text-subtitle-2,
+.text-body-1, .text-body-2,
+.text-button, .text-caption, .text-overline,
+.v-label, .v-field__input, .v-input input,
+.v-text-field input, .v-textarea textarea {
+  font-family: $app-font !important;
+}
+
+// Input / textarea padding to match previous styling (variables.scss had $textarea-padding: 0 0 10px 12px)
+.v-field__input {
+  padding: 0 0 10px 12px !important;
+}
+.v-field--variant-outlined .v-field__input,
+.v-field--variant-filled .v-field__input {
+  padding-top: var(--v-field-padding-top, 8px);
+  padding-inline-start: 12px;
+  padding-inline-end: 12px;
+  padding-bottom: 10px;
+}
+
+// Optional: tooltip styling from old variables
+.v-tooltip .v-overlay__content {
+  opacity: $tooltip-opacity;
+  background: $tooltip-background-color;
+}

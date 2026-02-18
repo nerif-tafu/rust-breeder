@@ -108,11 +108,14 @@
 <script lang="ts">
 import { isScanningAvailable } from '@/lib/ui-utils';
 import { PreviewData, ScreenCaptureServiceEventType } from '@/services/screen-capture/models';
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 import screenCaptureService from '../services/screen-capture/screen-capture.service';
 import SaplingScreenCapturePreview from './SaplingScreenCapturePreview.vue';
 
-@Component({ components: { SaplingScreenCapturePreview } })
+@Component({
+  components: { SaplingScreenCapturePreview },
+  emits: ['started-scanning', 'stopped-scanning', 'sapling-scanned']
+})
 export default class SaplingScreenCapture extends Vue {
   @Prop({ type: Boolean }) isHidden: boolean;
   @Prop({ type: Boolean }) isDisabled: boolean;

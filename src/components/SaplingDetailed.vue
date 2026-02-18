@@ -15,7 +15,7 @@
         'sapling-detailed_sapling--selectable': selectable && sapling && sapling.generationIndex > 0
       }"
       :sapling="sapling"
-      @click.native="selectable && sapling.generationIndex > 0 && handleSaplingClick()"
+      @click="selectable && sapling.generationIndex > 0 && handleSaplingClick()"
     />
     <div class="sapling-detailed_annotation-right">
       <span
@@ -53,11 +53,12 @@
 <script lang="ts">
 import Sapling from '@/models/sapling.model';
 import { GeneticsMapGroup } from '@/services/crossbreeding-service/models';
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop } from 'vue-facing-decorator';
 import SaplingGeneRepresentation from './SaplingGeneRepresentation.vue';
 
 @Component({
-  components: { SaplingGeneRepresentation }
+  components: { SaplingGeneRepresentation },
+  emits: ['click']
 })
 export default class SaplingDetailed extends Vue {
   @Prop({ type: Object, required: true }) readonly sapling!: Sapling;

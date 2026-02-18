@@ -2,65 +2,76 @@
   <div class="gene-inputs">
     <div class="gene-inputs_tabs-container">
       <v-tabs v-model="tab">
-        <v-tab>{{ functionalCookiesAccepted ? 'Current' : 'Genes' }}</v-tab>
-        <v-tab v-if="functionalCookiesAccepted" :class="{ 'gene-inputs_tab--animate': animatePreviousGenesTabIn }"
+        <v-tab value="0">{{ functionalCookiesAccepted ? 'Current' : 'Genes' }}</v-tab>
+        <v-tab v-if="functionalCookiesAccepted" value="1" :class="{ 'gene-inputs_tab--animate': animatePreviousGenesTabIn }"
           >Saved</v-tab
         >
       </v-tabs>
       <v-btn
-        :tile="!$vuetify.breakpoint.xsOnly"
-        :icon="$vuetify.breakpoint.xsOnly"
+        :tile="!$vuetify.display.xs"
+        :icon="$vuetify.display.xs"
         :disabled="!isFormValid"
-        v-if="functionalCookiesAccepted && !autoSaveInputSets && tab !== 1"
+        v-if="functionalCookiesAccepted && !autoSaveInputSets && tab !== '1'"
         class="gene-inputs_store-button"
         plain
         @click="handleStoreSetClick"
       >
-        <v-icon :left="!$vuetify.breakpoint.xsOnly" :class="{ 'mr-1': !$vuetify.breakpoint.xsOnly }">
+        <v-icon :left="!$vuetify.display.xs" :class="{ 'mr-1': !$vuetify.display.xs }">
           mdi-plus
         </v-icon>
-        <span v-if="!$vuetify.breakpoint.xsOnly">Save</span>
+        <span v-if="!$vuetify.display.xs">Save</span>
       </v-btn>
     </div>
 
-    <v-tabs-items v-model="tab">
-      <v-tab-item>
-        <v-form ref="form" v-model="isFormValid" spellcheck="false">
-          <SaplingInputHighlights :input-string="saplingGenes" :highlighted-map="highlightedMap" />
-          <SaplingListNumbering :sapling-gene-list="saplingGeneList"></SaplingListNumbering>
-          <v-textarea
-            full-width
-            ref="saplingGenesInput"
-            class="gene-inputs_input"
-            :placeholder="placeholder"
-            label="Add your genes here..."
-            :value="saplingGenes"
-            @input="handleSaplingGenesInput($event)"
-            @blur="handleSaplingGenesInputBlur"
-            @focus="handleSaplingGenesInputFocus"
-            @keydown="handleSaplingGenesInputKeyDown($event)"
-            outlined
-            no-resize
-            :disabled="disabled"
-            :rows="Math.max(5, saplingGenes.split(`\n`).length || 0)"
-            :rules="sourceSaplingRules"
-            autocomplete="off"
-          ></v-textarea>
-          <SaplingListPreview
-            :sapling-gene-list="saplingGeneList"
-            ref="saplingListPreview"
-            :highlight-errors="highlightInputErrors"
-          ></SaplingListPreview>
+    <v-window v-model="tab">
+      <v-window-item value="0">
+        <v-form ref="form" v-model="isFormValid" spellcheck="false" class="gene-inputs_form">
+          <div
+            class="gene-inputs_genes-area"
+            ref="genesAreaRef"
+            @wheel="handleGenesAreaWheel"
+          >
+            <SaplingInputHighlights :input-string="saplingGenesString" :highlighted-map="highlightedMap" />
+            <div
+              class="gene-inputs_numbering-scroll"
+              ref="numberingScrollWrapperRef"
+            >
+              <SaplingListNumbering :sapling-gene-list="saplingGeneList"></SaplingListNumbering>
+            </div>
+            <v-textarea
+              :key="genesInputKey"
+              full-width
+              ref="saplingGenesInput"
+              class="gene-inputs_input"
+              placeholder="Add your genes here..."
+              :value="saplingGenesString"
+              @update:model-value="handleSaplingGenesInput($event)"
+              @blur="handleSaplingGenesInputBlur"
+              @focus="handleSaplingGenesInputFocus"
+              @keydown="handleSaplingGenesInputKeyDown($event)"
+              outlined
+              no-resize
+              :disabled="disabled"
+              :rows="Math.max(5, saplingGenesString.split(`\n`).length || 0)"
+              :rules="sourceSaplingRules"
+              autocomplete="off"
+            ></v-textarea>
+            <SaplingListPreview
+              :sapling-gene-list="saplingGeneList"
+              ref="saplingListPreview"
+              :highlight-errors="highlightInputErrors"
+            ></SaplingListPreview>
+          </div>
         </v-form>
-      </v-tab-item>
-      <v-tab-item eager v-if="functionalCookiesAccepted">
+      </v-window-item>
+      <v-window-item value="1" v-if="functionalCookiesAccepted" eager>
         <PreviousGenes
           ref="previousGenes"
           :selected-plant-type-name="selectedPlantTypeName"
           @genes-selected="handlePreviousGenesSelectedEvent"
         ></PreviousGenes>
-      </v-tab-item>
-    </v-tabs-items>
+      </v-window-item>
+    </v-window>
   </div>
 </template>
 
@@ -70,7 +81,7 @@ import SaplingListPreview from './SaplingListPreview.vue';
 import SaplingListNumbering from './SaplingListNumbering.vue';
 import PreviousGenes from './PreviousGenes.vue';
 
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue } from 'vue-facing-decorator';
 import { GeneticsMap } from '@/services/crossbreeding-service/models';
 import { playAudio } from '@/lib/ui-utils';
 import StoredSet from '@/interfaces/stored-set';
@@ -82,7 +93,8 @@ import eventBus, { GLOBAL_EVENT_SELECTED_PLANT_TYPE_CHANGED } from '@/lib/global
     SaplingListPreview,
     SaplingListNumbering,
     PreviousGenes
-  }
+  },
+  emits: ['validity-change']
 })
 export default class GeneInputs extends Vue {
   @Prop({ type: Boolean }) readonly functionalCookiesAccepted: boolean;
@@ -92,8 +104,6 @@ export default class GeneInputs extends Vue {
   @Prop({ type: String }) readonly selectedPlantTypeName: string;
   @Prop({ type: GeneticsMap, required: false }) readonly highlightedMap: GeneticsMap | null;
 
-  // fix for Safari not respecting new line in placeholder
-  placeholder = `YGXWHH\nXWHYYG\nGHGWYY\netc...`.replaceAll('\n', ' '.repeat(100));
   saplingGenes = ``;
   isFormValid = false;
   isInputFocused = false;
@@ -101,18 +111,34 @@ export default class GeneInputs extends Vue {
   wasLastInputLongTimeAgo = false;
   lastInputTimeStamp = null;
   lastInputLongAgoTimeoutRef: undefined | NodeJS.Timeout;
-  tab = 0;
+  tab: string = '0';
+  private genesInputKey = 0;
+  private textareaScrollListener: (() => void) | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   sourceSaplingRules = [
     (v: string) =>
-      /^([GHWYX]{6}\n{1})*([GHWYX]{6}\n{0})*\n*$/.test(v) ||
+      this.isGenesListValid(v ?? this.saplingGenesString) ||
       'The list of genes is incomplete or invalid. Review if you provided them all correctly.',
     (v: string) => v !== '' || 'Give me some genes to work with!',
     (v: string) => !/^([GHWYX]{6}\n{0})*\n*$/.test(v) || 'Give me some more genes to work with!'
   ];
 
+  private isGenesListValid(v: string): boolean {
+    const raw = (v ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '').trim();
+    if (raw === '') return false;
+    const normalized = raw.toUpperCase().replace(/[^GHWYX\n]/g, '');
+    const lines = normalized.split(/\n/).filter((line) => line.length > 0);
+    return lines.length > 0 && lines.every((line) => /^[GHWYX]{6}$/.test(line));
+  }
+
+  get saplingGenesString(): string {
+    return typeof this.saplingGenes === 'string' ? this.saplingGenes : '';
+  }
+
   get saplingGeneList() {
-    return this.saplingGenes === '' ? [] : this.saplingGenes.trim().split(/\r?\n/);
+    const s = this.saplingGenesString.trim();
+    return s === '' ? [] : s.split(/\r?\n/);
   }
 
   get highlightInputErrors() {
@@ -129,22 +155,88 @@ export default class GeneInputs extends Vue {
     if (this.saplingGenes !== '') {
       this.checkFormValidity();
     }
+
+    this.$nextTick(() => this.attachNumberingScrollSync());
   }
 
-  handleSaplingGenesInput(value: string) {
+  beforeUnmount() {
+    const ta = this.getTextareaElement();
+    if (ta && this.textareaScrollListener) {
+      ta.removeEventListener('scroll', this.textareaScrollListener);
+    }
+    this.resizeObserver?.disconnect();
+  }
+
+  private getTextareaElement(): HTMLTextAreaElement | null {
+    const input = this.$refs.saplingGenesInput as { $el: HTMLElement } | undefined;
+    return input?.$el?.querySelector?.('textarea') ?? null;
+  }
+
+  private attachNumberingScrollSync() {
+    const textarea = this.getTextareaElement();
+    const wrapper = this.$refs.numberingScrollWrapperRef as HTMLElement | undefined;
+    if (!textarea || !wrapper) return;
+
+    this.updateNumberingWrapperHeight();
+    this.syncNumberingScroll();
+
+    this.textareaScrollListener = () => this.syncNumberingScroll();
+    textarea.addEventListener('scroll', this.textareaScrollListener);
+
+    this.resizeObserver = new ResizeObserver(() => this.updateNumberingWrapperHeight());
+    this.resizeObserver.observe(textarea);
+  }
+
+  private syncNumberingScroll() {
+    const textarea = this.getTextareaElement();
+    const wrapper = this.$refs.numberingScrollWrapperRef as HTMLElement | undefined;
+    if (textarea && wrapper) wrapper.scrollTop = textarea.scrollTop;
+  }
+
+  private updateNumberingWrapperHeight() {
+    const textarea = this.getTextareaElement();
+    const wrapper = this.$refs.numberingScrollWrapperRef as HTMLElement | undefined;
+    const form = (this.$refs.form as { $el: HTMLElement })?.$el;
+    if (!textarea || !wrapper || !form) return;
+
+    const taRect = textarea.getBoundingClientRect();
+    const formRect = form.getBoundingClientRect();
+    wrapper.style.height = `${textarea.clientHeight}px`;
+    wrapper.style.top = `${taRect.top - formRect.top}px`;
+  }
+
+  handleGenesAreaWheel(event: WheelEvent) {
+    const textarea = this.getTextareaElement();
+    if (!textarea || textarea.scrollHeight <= textarea.clientHeight) return;
+
+    const maxScroll = textarea.scrollHeight - textarea.clientHeight;
+    const atTop = textarea.scrollTop <= 0;
+    const atBottom = textarea.scrollTop >= maxScroll;
+    const scrollingDown = event.deltaY > 0;
+    const scrollingUp = event.deltaY < 0;
+
+    if ((atTop && scrollingUp) || (atBottom && scrollingDown)) return;
+
+    event.preventDefault();
+    textarea.scrollTop = Math.max(0, Math.min(maxScroll, textarea.scrollTop + event.deltaY));
+  }
+
+  handleSaplingGenesInput(value: string | Event) {
+    const str = typeof value === 'string' ? value : (value?.target && (value.target as HTMLInputElement).value) ?? '';
     this.prepareCheckForDatedInputActivity();
-    const textarea = (this.$refs.saplingGenesInput as Vue).$el.querySelector('textarea');
+    const textarea = (this.$refs.saplingGenesInput as { $el: HTMLElement }).$el?.querySelector('textarea');
     if (textarea) {
       const caretPosition = textarea.selectionStart;
-      this.saplingGenes = value;
+      this.saplingGenes = str;
+      this.checkFormValidity();
       this.onNextTickRerender(() => {
-        this.saplingGenes = value.toUpperCase().replace(/[^GHWYX\n]/g, '');
+        this.saplingGenes = str.toUpperCase().replace(/[^GHWYX\n]/g, '');
         if (this.saplingGenes.length !== 0 && this.saplingGenes.charAt(0).match(/\r?\n/)) {
           this.saplingGenes = this.saplingGenes.slice(1);
         }
         this.checkFormValidity();
         this.onNextTickRerender(() => {
-          textarea.selectionEnd = caretPosition + (this.saplingGenes.length - value.length);
+          textarea.selectionEnd = caretPosition + (this.saplingGenes.length - str.length);
         });
       });
     }
@@ -165,7 +257,7 @@ export default class GeneInputs extends Vue {
 
   handleSaplingGenesInputBlur() {
     this.isInputFocused = false;
-    this.saplingGenes = this.saplingGenes.replaceAll(/[\n]{2,}/g, '\n');
+    this.saplingGenes = this.saplingGenesString.replaceAll(/[\n]{2,}/g, '\n');
     this.saplingGenes = this.getDeduplicatedSaplingGeneList().join('\n');
     this.checkFormValidity();
   }
@@ -175,20 +267,22 @@ export default class GeneInputs extends Vue {
   }
 
   checkFormValidity() {
-    this.onNextTickRerender(() => {
-      if ((this.$refs.form as Vue & { validate: () => boolean }).validate()) {
-        (this.$refs.form as Vue & { resetValidation: () => boolean }).resetValidation();
+    this.onNextTickRerender(async () => {
+      const form = this.$refs.form as { validate: () => Promise<{ valid: boolean }>; resetValidation: () => void };
+      const result = await form.validate();
+      this.isFormValid = result.valid;
+      if (result.valid) {
+        form.resetValidation();
       }
-      this.$emit('validity-change', this.isFormValid);
+      this.$emit('validity-change', result.valid);
     });
   }
 
   handleSaplingScannedEvent(value: string) {
-    if (this.saplingGenes.indexOf(value) === -1) {
-      if (!this.saplingGenes.charAt(this.saplingGenes.length - 1).match(/\r?\n/) && this.saplingGenes.length !== 0) {
-        this.saplingGenes += '\n';
-      }
-      this.saplingGenes += value;
+    const s = this.saplingGenesString;
+    if (s.indexOf(value) === -1) {
+      const prefix = s.length !== 0 && !s.charAt(s.length - 1).match(/\r?\n/) ? s + '\n' : s;
+      this.saplingGenes = prefix + value;
       this.animateAndScrollToLastSapling();
       this.playSaplingsScannedSound();
       this.checkFormValidity();
@@ -196,25 +290,30 @@ export default class GeneInputs extends Vue {
   }
 
   handlePreviousGenesSelectedEvent(set: StoredSet) {
+    this.tab = '0';
     this.saplingGenes = set.genes;
+    this.genesInputKey += 1;
     eventBus.$emit(GLOBAL_EVENT_SELECTED_PLANT_TYPE_CHANGED, set.selectedPlantTypeName);
-    this.tab = 0;
-    this.checkFormValidity();
-    this.focusTextArea();
+    this.$nextTick(() => {
+      this.checkFormValidity();
+      this.$nextTick(() => this.$nextTick(() => this.focusTextArea()));
+    });
   }
 
   focusTextArea() {
     this.onNextTickRerender(() => {
-      const textArea = (this.$refs.saplingGenesInput as Vue).$refs?.input as HTMLTextAreaElement;
-      textArea.focus();
-      textArea.setSelectionRange(textArea.value.length, textArea.value.length);
+      const textArea = this.getTextareaElement();
+      if (textArea) {
+        textArea.focus();
+        textArea.setSelectionRange(textArea.value.length, textArea.value.length);
+      }
     });
   }
 
   storeCurrentSet() {
     const previousGenesComponent = this.$refs.previousGenes as PreviousGenes;
     if (previousGenesComponent) {
-      const wasAdded = previousGenesComponent.addNewSet(this.saplingGenes);
+      const wasAdded = previousGenesComponent.addNewSet(this.saplingGenesString);
       if (wasAdded) {
         this.animatePreviousGenesTab();
       }
@@ -229,7 +328,11 @@ export default class GeneInputs extends Vue {
   }
 
   getDeduplicatedSaplingGeneList() {
-    const splitSaplingGenes: string[] = this.saplingGeneList;
+    const fromState = this.saplingGenesString.trim();
+    const textarea = this.getTextareaElement();
+    const fromDom = textarea?.value?.trim() ?? '';
+    const raw = fromState || fromDom;
+    const splitSaplingGenes: string[] = raw === '' ? [] : raw.split(/\r?\n/);
     const deduplicatedSaplingGenes: string[] = splitSaplingGenes.filter(
       (genes, index, self) => index === self.findIndex((otherGenes) => otherGenes === genes)
     );
@@ -287,6 +390,21 @@ export default class GeneInputs extends Vue {
 </script>
 
 <style scoped lang="scss">
+.gene-inputs_form {
+  position: relative;
+}
+.gene-inputs_genes-area {
+  position: relative;
+}
+.gene-inputs_numbering-scroll {
+  position: absolute;
+  left: 0;
+  width: 25px;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
 .gene-inputs_input {
   z-index: 1;
 }
@@ -301,7 +419,7 @@ export default class GeneInputs extends Vue {
     animation: highlight-tab 0.7s ease-in;
   }
 }
-.v-tabs-items {
+.gene-inputs .v-window {
   background-color: transparent;
 }
 
@@ -328,5 +446,21 @@ export default class GeneInputs extends Vue {
 }
 .gene-inputs .v-input__control {
   border-radius: 0;
+}
+/* Match old site: row height 28px (1.75rem) and top padding 11px so rows align with numbering/preview */
+.gene-inputs .gene-inputs_input .v-field__input,
+.gene-inputs .gene-inputs_input textarea {
+  line-height: 1.75rem !important;
+  min-height: 1.75rem !important;
+}
+.gene-inputs .gene-inputs_input .v-field {
+  --v-field-padding-top: 11px;
+}
+.gene-inputs .gene-inputs_input .v-field__input {
+  padding-top: 11px !important;
+  padding-left: 25px !important;
+  /* Remove Vuetify’s top (and right) fade mask on textarea */
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
 }
 </style>

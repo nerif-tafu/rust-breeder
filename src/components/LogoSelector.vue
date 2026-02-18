@@ -3,38 +3,28 @@
     class="logo_container d-flex align-center"
     :class="{
       'logo_container--expanded': isExpanded,
-      'logo_container--animate-in': animateIn && !$vuetify.breakpoint.xsOnly,
+      'logo_container--animate-in': animateIn && !$vuetify.display.xs,
       'logo_container--animate-heartbeat': animateHeartbeat
     }"
   >
+    <!-- Collapsed: single logo with tooltip (no list, so no captured clicks) -->
     <v-tooltip
+      v-if="!isExpanded"
       open-delay="400"
       z-index="1001"
       max-width="600"
       :open-on-focus="false"
-      :disabled="isExpanded || $vuetify.breakpoint.xsOnly"
+      :disabled="$vuetify.display.xs"
       bottom
     >
-      <template v-slot:activator="{ on, attrs }">
-        <div ref="logoSelector" class="logo_image-container d-flex align-center" v-bind="attrs" v-on="on">
-          <button
-            v-for="(imageName, index) in imagesNames"
-            :key="imageName"
-            class="logo_image-button"
-            :data-index="index"
-            :class="{
-              'logo_image-button--hidden': activeImageName !== imageName && !isExpanded
-            }"
-            @click="handleImageClick(imageName)"
-          >
-            <img
-              v-if="(index === 0 && !isExpanded && !isClosing) || index > 0"
-              :src="`/img/${imageName}.webp`"
-              :ref="imageName"
-            />
-            <v-icon v-else large>
-              mdi-chevron-right
-            </v-icon>
+      <template v-slot:activator="{ props }">
+        <div
+          v-bind="props"
+          class="logo_image-container d-flex align-center logo_image-container--single"
+          @click="open()"
+        >
+          <button type="button" class="logo_image-button">
+            <img :src="`/img/${activeImageName}.webp`" alt="" />
           </button>
         </div>
       </template>
@@ -43,6 +33,24 @@
         the results of the calculation.</span
       >
     </v-tooltip>
+    <!-- Expanded: full list of buttons (no tooltip wrapper, clicks go straight to buttons) -->
+    <div
+      v-else
+      ref="logoSelector"
+      class="logo_image-container d-flex align-center"
+    >
+      <button
+        v-for="(imageName, index) in imagesNames"
+        :key="imageName"
+        type="button"
+        class="logo_image-button"
+        :data-index="index"
+        :data-plant="imageName"
+        @click="handleImageClick($event)"
+      >
+        <img :src="`/img/${imageName}.webp`" :alt="imageName" />
+      </button>
+    </div>
     <v-toolbar-title class="logo-selector_title overflow-visible">
       <a href="/" title="RustBreeder">
         <h1 class="text-h6">RustBreeder</h1>
@@ -53,9 +61,9 @@
 
 <script lang="ts">
 import eventBus, { GLOBAL_EVENT_SELECTED_PLANT_TYPE_CHANGED } from '@/lib/global-event-bus';
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue } from 'vue-facing-decorator';
 
-@Component
+@Component({ emits: ['plant-type-change'] })
 export default class LogoSelector extends Vue {
   imagesNames = [
     'mixed-berry',
@@ -90,7 +98,7 @@ export default class LogoSelector extends Vue {
       this.animateLogo();
     }
 
-    eventBus.$on(GLOBAL_EVENT_SELECTED_PLANT_TYPE_CHANGED, this.selectPlant);
+    eventBus.$on(GLOBAL_EVENT_SELECTED_PLANT_TYPE_CHANGED, (name: unknown) => this.selectPlant(name as string));
   }
 
   get isPlantSelected() {
@@ -110,7 +118,10 @@ export default class LogoSelector extends Vue {
     });
   }
 
-  handleImageClick(imageName: string) {
+  handleImageClick(event: MouseEvent) {
+    const button = event.currentTarget as HTMLElement;
+    const imageName = button?.dataset?.plant as string;
+    if (!imageName) return;
     if (this.isExpanded) {
       this.selectPlant(imageName);
       this.close();
@@ -147,10 +158,13 @@ export default class LogoSelector extends Vue {
   }
 
   private setImageAsFavicon(imageName: string) {
-    const link = document.querySelector("link[rel~='icon']") as HTMLAnchorElement;
-    if (link) {
-      link.href = `/img/${imageName}.webp`;
-    }
+    const href = `/img/${imageName}.webp?v=${Date.now()}`;
+    document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']").forEach((el) => el.remove());
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/webp';
+    link.href = href;
+    document.head.appendChild(link);
   }
 }
 </script>

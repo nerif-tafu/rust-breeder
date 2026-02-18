@@ -1,15 +1,16 @@
 <template>
   <v-app style="min-height: 100vh !important;">
-    <v-app-bar app>
-      <LogoSelector @plant-type-change="handlePlantTypeChange"></LogoSelector>
-      <div class="d-flex align-center ml-auto">
+    <ConfirmDialog />
+    <v-app-bar class="app-bar">
+      <div class="app-bar__content">
+        <LogoSelector @plant-type-change="handlePlantTypeChange" />
+        <div class="d-flex align-center ml-auto">
         <div v-if="estimatedTime" class="mr-2 estimated-time">
-          <v-icon small>
-            mdi-timer-outline
-          </v-icon>
+          <v-icon size="small">mdi-timer-outline</v-icon>
           {{ calcEstimatedTime }}
         </div>
         <InfoButtons class="d-none d-sm-flex" />
+        </div>
       </div>
     </v-app-bar>
     <v-main>
@@ -18,18 +19,19 @@
         :functional-cookies-accepted="functionalCookiesAccepted"
         @estimated-time-updated="handleEstimatedTimeUpdated"
       />
-      <InfoButtons class="d-flex justify-center d-xs-flex d-sm-none mb-3 flex-wrap" />
+      <InfoButtons class="d-flex justify-center d-sm-none mb-3 flex-wrap" />
     </v-main>
     <CookieConsent @cookies-updated="handleCookiesUpdated" />
   </v-app>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue } from 'vue-facing-decorator';
 import CrossbreedingSimulator from './components/CrossbreedingSimulator.vue';
 import InfoButtons from './components/InfoButtons.vue';
 import CookieConsent, { CookiesUpdateEvent } from './components/CookieConsent.vue';
 import LogoSelector from './components/LogoSelector.vue';
+import ConfirmDialog from './components/ConfirmDialog.vue';
 import 'cookie-store';
 import { timeMsToTimeString } from './lib/time-utils';
 
@@ -38,7 +40,8 @@ import { timeMsToTimeString } from './lib/time-utils';
     LogoSelector,
     CrossbreedingSimulator,
     InfoButtons,
-    CookieConsent
+    CookieConsent,
+    ConfirmDialog
   }
 })
 export default class App extends Vue {
@@ -68,21 +71,28 @@ export default class App extends Vue {
 </script>
 
 <style lang="scss">
-@import '~vuetify/src/styles/styles.sass';
-
+.app-bar .v-toolbar__content {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.app-bar__content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
 body {
   overflow: hidden;
 }
-@media #{map-get($display-breakpoints, 'sm-and-down')} {
-  .v-input__slider {
-    .v-input__slot {
-      display: block !important;
-    }
+@media (max-width: 599px) {
+  .v-input__slider .v-input__slot {
+    display: block !important;
   }
 }
-.v-input__slider {
-  .v-messages__message {
-    margin-top: 10px;
-  }
+.v-input__slider .v-messages__message {
+  margin-top: 10px;
 }
 </style>
