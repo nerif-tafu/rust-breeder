@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta
+      name="description"
+      content="An app that will help you crossbreed your plants in Rust easily. Works for hemp, berries, and food! The app calculates all possible genes for the set of plants that you provide."
+    />
+    <meta name="keywords" content="rust, breeder, crossbreed, hemp, berries, gene, genetic, farm, calculator, clone" />
+    <meta name="author" content="Diff" />
+    <link rel="icon" href="<%= BASE_URL %>favicon.png" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,400;1,100&display=swap"
+      rel="stylesheet"
+    />
+    <title>Rust Breeder - Crossbreeding Optimizer</title>
+
+    <link rel="preload" href="/img/blue-berry.webp" as="image" />
+    <link rel="preload" href="/img/corn.webp" as="image" />
+    <link rel="preload" href="/img/green-berry.webp" as="image" />
+    <link rel="preload" href="/img/hemp.webp" as="image" />
+    <link rel="preload" href="/img/mixed-berry.webp" as="image" />
+    <link rel="preload" href="/img/potato.webp" as="image" />
+    <link rel="preload" href="/img/pumpkin.webp" as="image" />
+    <link rel="preload" href="/img/red-berry.webp" as="image" />
+    <link rel="preload" href="/img/white-berry.webp" as="image" />
+    <link rel="preload" href="/img/yellow-berry.webp" as="image" />
+    <link rel="preload" href="/img/wheat.webp" as="image" />
+    <link rel="preload" href="/img/sunflower.webp" as="image" />
+    <link rel="preload" href="/img/rose.webp" as="image" />
+    <link rel="preload" href="/img/orchid.webp" as="image" />
+  </head>
+  <body>
+    <noscript>
+      <strong
+        >App that will help you crossbreed your plants in Rust easily. Works for hemp and berries! The app calculates
+        all possible genes for the set of plants that you provide. Requires JavaScript to be enabled.</strong
+      >
+    </noscript>
+    <div id="app"></div>
+    <audio id="wrongKeyAudio" src="<%= BASE_URL %>audio/headshot.mp3" />
+    <audio id="saplingScannedAudio" src="<%= BASE_URL %>audio/pop.mp3" />
+    <!-- built files will be auto injected -->
+  </body>
+</html>
