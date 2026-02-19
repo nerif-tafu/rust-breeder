@@ -155,7 +155,10 @@ export default class CookieConsent extends Vue {
 
   checkIfNeedsConfirmationModal(willDeclineFunctionalCookies: boolean) {
     return this.functionalCookiesAccepted && willDeclineFunctionalCookies
-      ? (this as any).$confirm(FUNCTIONAL_DECLINE_CONFIRM_MODAL_TEXT, FUNCTIONAL_DECLINE_CONFIRM_MODAL_OPTIONS)
+      ? (this as unknown as { $confirm: (text: string, options?: object) => Promise<boolean> }).$confirm(
+          FUNCTIONAL_DECLINE_CONFIRM_MODAL_TEXT,
+          FUNCTIONAL_DECLINE_CONFIRM_MODAL_OPTIONS
+        )
       : Promise.resolve(true);
   }
 

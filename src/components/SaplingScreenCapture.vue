@@ -167,7 +167,10 @@ export default class SaplingScreenCapture extends Vue {
     (this.$refs.preview as SaplingScreenCapturePreview)?.setPreview(regionIndex, imgData);
   }
 
-  onScreenCaptureServiceEvent(eventType: ScreenCaptureServiceEventType, data?: string | PreviewData) {
+  onScreenCaptureServiceEvent(
+    eventType: ScreenCaptureServiceEventType,
+    data?: string | PreviewData | DebugPipelineData
+  ) {
     if (eventType === 'INITIALIZING') {
       this.isInitializing = true;
     } else if (eventType === 'STARTED') {
@@ -185,7 +188,7 @@ export default class SaplingScreenCapture extends Vue {
       const previewData = data as PreviewData;
       this.setPreview(previewData.regionIndex, previewData.imgData);
     } else if (eventType === 'DEBUG_PIPELINE') {
-      const payload = data as DebugPipelineData;
+      const payload = data as unknown as DebugPipelineData;
       this.debugPipelines = { ...this.debugPipelines, [payload.regionIndex]: payload };
     }
   }

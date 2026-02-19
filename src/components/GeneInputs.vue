@@ -115,10 +115,14 @@ export default class GeneInputs extends Vue {
   private genesInputKey = 0;
   private textareaScrollListener: (() => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  /** Set when loading a saved set so the first validation uses this even if the textarea value is not synced yet. */
+  private lastLoadedGenesForValidation = '';
 
   sourceSaplingRules = [
     (v: string) =>
-      this.isGenesListValid((v?.trim() ?? '') || this.saplingGenesString) ||
+      this.isGenesListValid(
+        (v?.trim() ?? '') || this.lastLoadedGenesForValidation || this.saplingGenesString
+      ) ||
       'The list of genes is incomplete or invalid. Review if you provided them all correctly.',
     (v: string) => v !== '' || 'Give me some genes to work with!',
     (v: string) => !/^([GHWYX]{6}\n{0})*\n*$/.test(v) || 'Give me some more genes to work with!'
@@ -225,6 +229,7 @@ export default class GeneInputs extends Vue {
 
   handleSaplingGenesInput(value: string | Event) {
     const str = typeof value === 'string' ? value : (value?.target && (value.target as HTMLInputElement).value) ?? '';
+    this.lastLoadedGenesForValidation = '';
     this.prepareCheckForDatedInputActivity();
     const textarea = (this.$refs.saplingGenesInput as { $el: HTMLElement }).$el?.querySelector('textarea');
     if (textarea) {
@@ -293,15 +298,21 @@ export default class GeneInputs extends Vue {
 
   handlePreviousGenesSelectedEvent(set: StoredSet) {
     this.tab = '0';
+    this.lastLoadedGenesForValidation = set.genes;
     this.saplingGenes = set.genes;
     this.genesInputKey += 1;
     eventBus.$emit(GLOBAL_EVENT_SELECTED_PLANT_TYPE_CHANGED, set.selectedPlantTypeName);
+    const form = this.$refs.form as { resetValidation: () => void } | undefined;
+    form?.resetValidation?.();
     this.$nextTick(() => {
       this.checkFormValidity();
       this.$nextTick(() => {
         this.checkFormValidity();
         this.attachNumberingScrollSync();
-        this.$nextTick(() => this.focusTextArea());
+        this.$nextTick(() => {
+          this.focusTextArea();
+          this.lastLoadedGenesForValidation = '';
+        });
       });
     });
   }

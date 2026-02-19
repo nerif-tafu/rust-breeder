@@ -123,7 +123,7 @@ export default class SimulationResults extends Vue {
       if (this.geneCount[`${geneName.toLowerCase()}Count`]) {
         mapGroups = mapGroups.filter(
           (group) =>
-            (group.mapList[0].resultSapling[`numberOf${geneName}s`] as Function)() ===
+            (group.mapList[0].resultSapling[`numberOf${geneName}s`] as () => number)() ===
             Number(this.geneCount[`${geneName.toLowerCase()}Count`])
         );
       }

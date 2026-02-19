@@ -141,7 +141,6 @@
 </template>
 
 <script lang="ts">
-import { getCurrentInstance } from 'vue';
 import { Component, Vue, Prop } from 'vue-facing-decorator';
 import crossbreedingOrchestrator from '../services/crossbreeding-service/crossbreeding-orchestrator';
 import SimulationResults from './SimulationResults.vue';
@@ -237,10 +236,7 @@ export default class CrossbreedingSimulator extends Vue {
 
   mounted() {
     this.options = (this.$refs.options as Options).getOptions();
-    const proxy = getCurrentInstance()?.proxy;
-    if (proxy) {
-      crossbreedingOrchestrator.addEventListener((type, data) => proxy.onCrossbreedingServiceEvent(type, data));
-    }
+    crossbreedingOrchestrator.addEventListener((type, data) => this.onCrossbreedingServiceEvent(type, data));
   }
 
   onCrossbreedingServiceEvent(type: string, data: CrossbreedingOrchestratorEventListenerCallbackData) {

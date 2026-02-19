@@ -93,7 +93,7 @@ class ScreenCaptureService {
             .fill(0)
             .map(this.setupWorker.bind(this))
         );
-      } catch (err) {
+      } catch {
         // It can happen that the data for Tesseract text recognition is corrupted.
         // In this case we clear the database and reinitialize the workers.
         await this.clearTesseractDB();
@@ -108,10 +108,7 @@ class ScreenCaptureService {
       worker = await createWorker();
 
       await worker.setParameters({
-        // eslint-disable-next-line @typescript-eslint/camelcase
         tessedit_pageseg_mode: PSM.SINGLE_CHAR,
-        // Only consider gene letters so W is not confused or rejected
-        // eslint-disable-next-line @typescript-eslint/camelcase
         tessedit_char_whitelist: 'GHWXY'
       });
       return worker;
