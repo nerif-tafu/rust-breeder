@@ -109,7 +109,10 @@ class ScreenCaptureService {
 
       await worker.setParameters({
         // eslint-disable-next-line @typescript-eslint/camelcase
-        tessedit_pageseg_mode: PSM.SINGLE_CHAR
+        tessedit_pageseg_mode: PSM.SINGLE_CHAR,
+        // Only consider gene letters so W is not confused or rejected
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        tessedit_char_whitelist: 'GHWXY'
       });
       return worker;
     } catch (err) {
