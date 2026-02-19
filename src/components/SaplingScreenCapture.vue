@@ -84,6 +84,7 @@
         <v-divider></v-divider>
         <v-card-actions>
           <v-switch v-model="showPreview" label="Display Preview" class="mt-0" hide-details></v-switch>
+          <v-switch v-model="showDebug" label="Debug information" class="mt-0" hide-details></v-switch>
           <v-spacer></v-spacer>
           <v-btn color="primary" text @click="isDialogOpen = false">
             Close
@@ -101,13 +102,22 @@
       </v-card>
     </v-dialog>
 
-    <sapling-screen-capture-preview ref="preview" :is-open="isScanning && showPreview"></sapling-screen-capture-preview>
+    <sapling-screen-capture-preview
+      ref="preview"
+      :is-open="isScanning && (showPreview || showDebug)"
+      :show-debug="showDebug"
+      :debug-pipelines="debugPipelines"
+    ></sapling-screen-capture-preview>
   </span>
 </template>
 
 <script lang="ts">
 import { isScanningAvailable } from '@/lib/ui-utils';
-import { PreviewData, ScreenCaptureServiceEventType } from '@/services/screen-capture/models';
+import {
+  DebugPipelineData,
+  PreviewData,
+  ScreenCaptureServiceEventType
+} from '@/services/screen-capture/models';
 import { Component, Vue, Prop } from 'vue-facing-decorator';
 import screenCaptureService from '../services/screen-capture/screen-capture.service';
 import SaplingScreenCapturePreview from './SaplingScreenCapturePreview.vue';
@@ -123,9 +133,11 @@ export default class SaplingScreenCapture extends Vue {
 
   isDialogOpen = false;
   showPreview = false;
+  showDebug = false;
   isScanning = false;
   isInitializing = false;
   shouldDisplayScreenCaptureButton = false;
+  debugPipelines: Record<number, DebugPipelineData> = {};
 
   created() {
     this.shouldDisplayScreenCaptureButton = isScanningAvailable();
@@ -144,7 +156,7 @@ export default class SaplingScreenCapture extends Vue {
   }
 
   startCapturing() {
-    screenCaptureService.startCapturing(this.showPreview);
+    screenCaptureService.startCapturing(this.showPreview, this.showDebug);
   }
 
   stopCapturing() {
@@ -165,12 +177,16 @@ export default class SaplingScreenCapture extends Vue {
     } else if (eventType === 'STOPPED') {
       this.isInitializing = false;
       this.isScanning = false;
+      this.debugPipelines = {};
       this.$emit('stopped-scanning');
     } else if (eventType === 'SAPLING-FOUND') {
       this.$emit('sapling-scanned', data);
     } else if (eventType === 'PREVIEW') {
       const previewData = data as PreviewData;
       this.setPreview(previewData.regionIndex, previewData.imgData);
+    } else if (eventType === 'DEBUG_PIPELINE') {
+      const payload = data as DebugPipelineData;
+      this.debugPipelines = { ...this.debugPipelines, [payload.regionIndex]: payload };
     }
   }
 }

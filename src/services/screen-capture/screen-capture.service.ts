@@ -1,5 +1,10 @@
 import Jimp from 'jimp';
-import { PreviewData, ScreenCaptureServiceEventListenerCallback, ScreenCaptureServiceEventType } from './models';
+import {
+  DebugPipelineData,
+  PreviewData,
+  ScreenCaptureServiceEventListenerCallback,
+  ScreenCaptureServiceEventType
+} from './models';
 import { createWorker, PSM } from 'tesseract.js';
 
 const TIME_MS_BETWEEEN_SCANS = 200;
@@ -30,13 +35,15 @@ class ScreenCaptureService {
 
   isActive = false;
   withPreview = false;
+  withDebug = false;
   video: HTMLVideoElement;
   workers: Tesseract.Worker[] = [];
   videoCanvas = document.createElement('canvas');
 
-  startCapturing(withPreview: boolean) {
+  startCapturing(withPreview: boolean, withDebug = false) {
     this.isActive = true;
     this.withPreview = withPreview;
+    this.withDebug = withDebug;
     navigator.mediaDevices
       .getDisplayMedia({
         video: {
@@ -179,7 +186,67 @@ class ScreenCaptureService {
     });
   }
 
+  private jimpToBase64(image: Jimp): Promise<string> {
+    return new Promise((resolve, reject) => {
+      image.getBase64('image/png', (err, data) => (err ? reject(err) : resolve(data)));
+    });
+  }
+
+  private async getRecognizedGeneWithDebug(imgData: ImageData, workerIndex: number): Promise<string | null> {
+    const steps: { name: string; base64: string }[] = [];
+    try {
+      const image = await new Promise<Jimp>((resolve, reject) => {
+        new Jimp(
+          { data: Buffer.from(imgData.data), width: imgData.width, height: imgData.height },
+          (err, img) => (err ? reject(err) : resolve(img))
+        );
+      });
+      steps.push({ name: '1. Raw crop', base64: await this.jimpToBase64(image) });
+
+      image.greyscale();
+      steps.push({ name: '2. Greyscale', base64: await this.jimpToBase64(image) });
+
+      image.invert();
+      steps.push({ name: '3. Invert', base64: await this.jimpToBase64(image) });
+
+      image.normalize();
+      steps.push({ name: '4. Normalize', base64: await this.jimpToBase64(image) });
+
+      image.scale(2);
+      steps.push({ name: '5. Scale 2×', base64: await this.jimpToBase64(image) });
+
+      image.convolute([
+        [0, -0.5, 0],
+        [-0.5, 4, -0.5],
+        [0, -0.5, 0]
+      ]);
+      steps.push({ name: '6. Convolute (sharpen)', base64: await this.jimpToBase64(image) });
+
+      image.contrast(0.5);
+      steps.push({ name: '7. Contrast', base64: await this.jimpToBase64(image) });
+
+      const data = await this.jimpToBase64(image);
+      const {
+        data: { text: rawText }
+      } = await this.workers[workerIndex].recognize(data);
+      const text = rawText.replace(/\s/g, '').toUpperCase();
+      const ocrResult = text.match(/^[GHYWX]{1}$/g) ? text : null;
+
+      const regionIndex = Math.floor(workerIndex / 6);
+      this.sendEventToListeners('DEBUG_PIPELINE', { regionIndex, steps, ocrResult } as DebugPipelineData);
+      return ocrResult;
+    } catch {
+      const regionIndex = Math.floor(workerIndex / 6);
+      this.sendEventToListeners('DEBUG_PIPELINE', { regionIndex, steps, ocrResult: null } as DebugPipelineData);
+      return null;
+    }
+  }
+
   private getRecognizedGene(imgData: ImageData, workerIndex: number): Promise<string | null> {
+    const isFirstGeneOfRegion = workerIndex === 0 || workerIndex === 6;
+    if (this.withDebug && isFirstGeneOfRegion) {
+      return this.getRecognizedGeneWithDebug(imgData, workerIndex);
+    }
     const promise = new Promise<string | null>((resolve) => {
       new Jimp({ data: Buffer.from(imgData.data), width: imgData.width, height: imgData.height }, (err, image) => {
         if (err) {
@@ -284,7 +351,10 @@ class ScreenCaptureService {
     this.sendEventToListeners('PREVIEW', { imgData, regionIndex });
   }
 
-  sendEventToListeners(eventName: ScreenCaptureServiceEventType, data?: string | PreviewData) {
+  sendEventToListeners(
+    eventName: ScreenCaptureServiceEventType,
+    data?: string | PreviewData | DebugPipelineData
+  ) {
     this.listeners.forEach((listenerCallback) => {
       listenerCallback(eventName, data);
     });
