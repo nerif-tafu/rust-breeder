@@ -118,7 +118,7 @@ export default class GeneInputs extends Vue {
 
   sourceSaplingRules = [
     (v: string) =>
-      this.isGenesListValid(v ?? this.saplingGenesString) ||
+      this.isGenesListValid((v?.trim() ?? '') || this.saplingGenesString) ||
       'The list of genes is incomplete or invalid. Review if you provided them all correctly.',
     (v: string) => v !== '' || 'Give me some genes to work with!',
     (v: string) => !/^([GHWYX]{6}\n{0})*\n*$/.test(v) || 'Give me some more genes to work with!'
@@ -173,6 +173,8 @@ export default class GeneInputs extends Vue {
   }
 
   private attachNumberingScrollSync() {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
     const textarea = this.getTextareaElement();
     const wrapper = this.$refs.numberingScrollWrapperRef as HTMLElement | undefined;
     if (!textarea || !wrapper) return;
@@ -296,7 +298,11 @@ export default class GeneInputs extends Vue {
     eventBus.$emit(GLOBAL_EVENT_SELECTED_PLANT_TYPE_CHANGED, set.selectedPlantTypeName);
     this.$nextTick(() => {
       this.checkFormValidity();
-      this.$nextTick(() => this.$nextTick(() => this.focusTextArea()));
+      this.$nextTick(() => {
+        this.checkFormValidity();
+        this.attachNumberingScrollSync();
+        this.$nextTick(() => this.focusTextArea());
+      });
     });
   }
 

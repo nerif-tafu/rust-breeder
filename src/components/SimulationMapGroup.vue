@@ -130,8 +130,12 @@ export default class SimulationMapGroup extends Vue {
   }
 
   setForcedHeight() {
-    if (this.$refs.primaryMap) {
-      this.backingMapHeight = ((this.$refs.primaryMap as { $el: HTMLElement }[])[0]?.$el as HTMLElement).offsetHeight;
+    const ref = this.$refs.primaryMap;
+    if (!ref) return;
+    const component = Array.isArray(ref) ? ref[0] : ref;
+    const el = component?.$el as HTMLElement | undefined;
+    if (el?.offsetHeight != null) {
+      this.backingMapHeight = el.offsetHeight;
     }
   }
 
